@@ -2,7 +2,7 @@
 domain:
 
 # broker suffix
-brokerUrl:
+brokerUrl: # e.g. kafka.xxxx.xx.kafka.us-east-1.amazonaws.com:9094
 
 serviceAnnotations:
   awsLoadbalancerAdditionalResourceTags: '"App=kafka-proxy-mm,Stage=prod"'
