@@ -3,6 +3,17 @@ Helm chart for installing Kafka Proxy
 
 Uses - https://github.com/grepplabs/kafka-proxy
 
+Table of Contents
+=================
+
+* [helm-aws-kafka-proxy](#helm-aws-kafka-proxy)
+   * [Pre-Requisites](#pre-requisites)
+      * [Cert Manager](#cert-manager)
+      * [SASL/Plain Auth](#saslplain-auth)
+         * [Vault](#vault)
+   * [Install/Upgrade Chart](#installupgrade-chart)
+   * [Connection](#connection)
+
 ## Pre-Requisites
 
 ### Cert Manager
