@@ -12,7 +12,7 @@ Table of Contents
       * [SASL/Plain Auth](#saslplain-auth)
          * [Vault](#vault)
    * [Install/Upgrade Chart](#installupgrade-chart)
-   * [Connection](#connection)
+   * [Client Connection](#client-connection)
 
 ## Pre-Requisites
 
@@ -72,7 +72,7 @@ Run below command to install/upgrade the chart:
 helm upgrade -i pes-kafka-proxy . -n platform --values stages/prod/prod-values.yaml
 ```
 
-## Connection
+## Client Connection
 
 Sample client properties:
 
