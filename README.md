@@ -22,3 +22,11 @@ Below are the sequence of steps involved when you install the chart:
 [3] Certificate issued and stored in secret on successful verification
 
 [4] Certificate mounted to the deployment is used by the proxy to establish TLS connections
+
+## Install/Upgrade Chart
+
+Run below command to install/upgrade the chart:
+
+```
+helm upgrade -i pes-kafka-proxy . -n platform --values stages/prod/prod-values.yaml
+```
