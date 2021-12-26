@@ -1,0 +1,44 @@
+# apply a domain to the broker url
+domain:
+
+# broker suffix
+brokerUrl:
+
+serviceAnnotations:
+  awsLoadbalancerAdditionalResourceTags: '"App=kafka-proxy-mm,Stage=prod"'
+  awsLoadbalancerAccessLogS3BucketName: # S3 bucket name for writing access logs
+  awsLoadbalancerAccessLogS3BucketPrefix: # Prefix to be used in the above bucket
+  awsLoadbalancerExtraSecurityGroups: # Provide any security group id's to restrict ingress
+
+certificate:
+  name: kafka-proxy-cert
+  domainName: "*.kafka.example.net" # Domain for which the certificate is to be issued
+  
+loadBalancerSourceRanges: []
+
+# use tag -all to include the plugin for local auth
+imageTag: v0.2.7-all
+
+## SASL auth config
+extraArgs: [
+    http-listen-address=0.0.0.0:9080,
+    log-format=json,
+    tls-enable,
+    tls-insecure-skip-verify,
+    log-level=error,
+    dynamic-listeners-disable,
+    proxy-request-buffer-size=32768,
+    proxy-response-buffer-size=32768,
+    proxy-listener-read-buffer-size=32768,
+    proxy-listener-write-buffer-size=131072,
+    kafka-connection-read-buffer-size=131072,
+    kafka-connection-write-buffer-size=32768,
+    proxy-listener-key-file=/opt/tls/tls.key,
+    proxy-listener-cert-file=/opt/tls/tls.crt,
+    proxy-listener-tls-enable,
+    http-health-path=/health,
+    auth-local-enable,
+    auth-local-command=/opt/kafka-proxy/bin/auth-user,
+    auth-local-param=--username=${PROXY_USERNAME},
+    auth-local-param=--password=${PROXY_PASSWORD},
+]
