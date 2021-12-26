@@ -1,0 +1,125 @@
+---
+# Default values for kafka-proxy.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## ------------------------------------------------------
+## Kafka-proxy
+## ------------------------------------------------------
+
+name: kafka-proxy
+namespace: platform
+brokerName: broker
+clusterType: kafka
+
+## The number of Kafka-Proxy pods
+kafkaProxy: 3
+## The StatefulSet Update Strategy which Kafka will use when changes are applied: OnDelete or RollingUpdate
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+deploymentStrategy: RollingUpdate
+
+# apply a domain to the broker url
+domain: []
+
+# broker suffix
+brokerUrl: {}
+
+broker: {}
+
+awsBrokerName: {}
+
+server:
+  readinessProbe:
+    initialDelaySeconds: 10
+    timeoutSeconds: 10
+  livenessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 10
+  # kafka-proxy resource limits
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 4000Mi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+   prefixURL: "/health"
+ 
+## Image Info
+## ref: https://hub.docker.com/r/confluentinc/cp-kafka/
+image: grepplabs/kafka-proxy
+imageTag: v0.2.3
+
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: Always
+
+## number of proxy replicas
+replicas: 1
+
+## Custom pod annotations
+#podAnnotations: {}
+
+podAnnotations:
+  prometheus:
+    io:
+      path: "/metrics"
+      port: '"9080"'
+      scrape: '"false"'
+
+restartPolicy: Always
+revisionHistoryLimit: 10
+
+## Session affinity
+sessionAffinity: None
+
+## Service Annotations
+serviceAnnotations:
+  # reference - https://github.com/kubernetes/kubernetes/blob/e4b0a935fa393944b6322fa6ef0970d858ad70f6/pkg/cloudprovider/providers/aws/aws.go#L95-L195
+  awsLoadbalancerAccessLogEnabled: '"true"'
+  # Specifies whether access logs are enabled for the load balancer
+  awsLoadbalancerAccessLogEmitInterval: '"60"'
+  # The logical hierarchy you created for you Amazon s3 bucket, for example 'my-bucket-prefix/prod'
+  awsLoadbalancerAdditionalResourceTags: '"App=kafka-proxy,Stage="'
+  # to specify a comma-separated list of key-value pairs which will be recorded as
+  # additional tags in the ELB
+  # For example: "Key1=Val1,Key2=Val2,KeyNoVal1=,KeyNoVal2"
+  awsLoadbalancerCrossZoneLoadbalancingEnabled: '"true"'
+  # used on the service to enable or disable cross-zone load balancing
+  awsLoadbalancerConnectionDrainingEnabled: '"true"'
+  # used on the service to enable or disable connection draining
+  awsLoadbalancerConnectionDrainingTimeout: '"300"'
+  # used on the service to specify a connection draining timeout
+
+loadBalancerSourceRanges: []
+
+  # enable HTTPS and AWS ACM certificate
+  ## awsLBbackendProtocol: https
+  ## awsLBsslCert: << AWS ACM ARN >>
+  
+## Container override configuration
+extraArgs: [
+    http-listen-address=0.0.0.0:9080,
+    log-format=json,
+    tls-enable,
+    tls-insecure-skip-verify,
+    log-level=error,
+    dynamic-listeners-disable,
+    proxy-request-buffer-size=32768,
+    proxy-response-buffer-size=32768,
+    proxy-listener-read-buffer-size=32768,
+    proxy-listener-write-buffer-size=131072,
+    kafka-connection-read-buffer-size=131072,
+    kafka-connection-write-buffer-size=32768,
+    proxy-listener-key-file=/opt/tls/tls.key,
+    proxy-listener-cert-file=/opt/tls/tls.crt,
+    proxy-listener-tls-enable,
+    http-health-path=/health
+]
+
+## Type of service for the kafka-proxy
+service:
+  type: LoadBalancer
+  servicePort: 443
+  nodePort:
+  healthPort: 9080
