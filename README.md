@@ -60,3 +60,15 @@ Run below command to install/upgrade the chart:
 ```
 helm upgrade -i pes-kafka-proxy . -n platform --values stages/prod/prod-values.yaml
 ```
+
+## Connection
+
+Clients can connect to the proxy with below sample config:
+
+```
+bootstrap.servers=
+security.protocol=SASL_SSL
+ssl.enabled.protocols = TLSv1.2
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username=${PROXY_USERNAME} password=${PROXY_PASSWORD};
+```
