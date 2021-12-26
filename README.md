@@ -23,6 +23,36 @@ Below are the sequence of steps involved when you install the chart:
 
 [4] Certificate mounted to the deployment is used by the proxy to establish TLS connections
 
+### SASL/Plain Auth
+
+`prod-values.yaml` configures the proxy to use SASL/Plain auth mechanism for the listener i.e. Clients need to authenticate with the proxy by providing username/password
+
+Update the placeholders `${PROXY_USERNAME}` and `${PROXY_PASSWORD}` in your CI/CD script with the username and password that you want to use from your credentials management system
+
+#### Vault
+
+If you are using Vault to store your credentials, this could be achieved with below commands:
+
+Read credentials from Vault:
+
+```bash
+read proxy_username proxy_password < <(echo $(curl --header "X-Vault-Token:<token>" --header "X-Vault-Namespace:<namespace>" https://<vault_url>/<path> | jq -r '.data.data.username,.data.data.password' ))
+```
+
+Substitute the placeholders with credentials:
+
+```bash
+sed -i '' -e "s/\${PROXY_USERNAME}/$proxy_username/" -e "s/\${PROXY_PASSWORD}/$proxy_password/" stages/prod/prod-values.yaml
+```
+
+Clear the credentials from the file and env variable:
+
+```bash
+sed -i '' -e "s/$proxy_username/\${PROXY_USERNAME}/" -e "s/$proxy_password/\${PROXY_PASSWORD}/" stages/prod/prod-values.yaml
+unset proxy_username
+unset proxy_password
+```
+
 ## Install/Upgrade Chart
 
 Run below command to install/upgrade the chart:
