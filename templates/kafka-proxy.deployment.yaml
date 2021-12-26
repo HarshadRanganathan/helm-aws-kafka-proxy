@@ -1,0 +1,105 @@
+
+{{- $kafkaProxy := (add1 .Values.kafkaProxy) | int }}
+{{- $root := . }}
+{{- range $i := untilStep 1 ($kafkaProxy) 1 }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+    chart: {{ $root.Chart.Name }}-{{ $root.Chart.Version }}
+    heritage: {{ $root.Release.Service }}
+    release: {{ $root.Release.Name }}
+  name: {{ template "fullname" $root }}-{{ $i }}
+  namespace: {{ $root.Values.namespace }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ $root.Values.replicas }}
+  revisionHistoryLimit: {{ $root.Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" $root }}-{{ $i }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: {{ $root.Values.deploymentStrategy }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: {{ $root.Values.podAnnotations.prometheus.io.path }}
+        prometheus.io/port: {{ $root.Values.podAnnotations.prometheus.io.port }}
+        prometheus.io/scrape: {{ $root.Values.podAnnotations.prometheus.io.scrape }}
+      
+      labels:
+        app: {{ template "fullname" $root }}-{{ $i }}
+        clustertype: {{ template "fullname" $root }}
+    spec:
+      volumes:
+      - name: kafka-wildcard-cert
+        secret:
+          defaultMode: 420
+          secretName: {{ $root.Values.certificate.name }}
+      containers:
+      - args:
+        - server
+        - --bootstrap-server-mapping=b-{{ $i }}.{{ $root.Values.brokerUrl }},0.0.0.0:443,{{ $root.Values.brokerName }}-{{ $i }}.{{ $root.Values.clusterType }}.{{ $root.Values.domain }}:443
+        {{- range $i := untilStep 1 ($kafkaProxy) 1 }}
+        - --external-server-mapping=b-{{ $i }}.{{ $root.Values.brokerUrl }},{{ $root.Values.brokerName }}-{{ $i }}.{{ $root.Values.clusterType }}.{{ $root.Values.domain }}:443
+        {{- end }}
+        {{- range $value := $root.Values.extraArgs }}
+        {{- if $value }}
+        - --{{ $value }}
+        {{- end }}
+        {{- end }}
+        #env:
+          #- name: KAFKA_AUTH_PASSWORD
+            #valueFrom:
+              #secretKeyRef:
+                #name: {{ $root.Values.kafkaAuthentication }}
+                #key: password
+        image: {{ $root.Values.image}}:{{$root.Values.imageTag }}
+        imagePullPolicy: {{ $root.Values.imagePullPolicy }}
+        name: {{ $root.Values.name }}
+        ports:
+        - containerPort: {{ $root.Values.service.servicePort }}
+          nodePort: {{ $root.Values.service.nodePort }}
+          name: kafka-proxy-{{ $i }}
+        - containerPort:  {{ $root.Values.service.healthPort }}
+          name: health-{{ $i }}
+          nodePort: {{ $root.Values.service.nodePort }}
+        readinessProbe:
+          httpGet:
+            path: {{ $root.Values.server.prefixURL }}
+            port: 9080
+          initialDelaySeconds: {{ $root.Values.server.readinessProbe.initialDelaySeconds }}
+          timeoutSeconds: {{ $root.Values.server.readinessProbe.timeoutSeconds }}
+        livenessProbe:
+          httpGet:
+            path: {{ $root.Values.server.prefixURL }}
+            port: 9080
+          initialDelaySeconds: {{ $root.Values.server.livenessProbe.initialDelaySeconds }}
+          timeoutSeconds: {{ $root.Values.server.livenessProbe.timeoutSeconds }}
+        resources:
+          limits:
+            cpu: {{ $root.Values.server.resources.limits.cpu }}
+            memory: {{ $root.Values.server.resources.limits.memory }}
+          requests:
+            cpu: {{ $root.Values.server.resources.requests.cpu }}
+            memory: {{ $root.Values.server.resources.requests.memory }}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_TIME
+            - NET_BIND_SERVICE
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/tls
+          name: kafka-wildcard-cert
+          readOnly: true
+      restartPolicy: {{$root.Values.restartPolicy}}
+      schedulerName: default-scheduler
+{{- end }}

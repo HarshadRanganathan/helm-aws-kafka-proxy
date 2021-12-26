@@ -1,0 +1,27 @@
+{{- $root := . }}
+{{- if not (lookup "cert-manager.io/v1" "Certificate" .Release.Namespace $root.Values.certificate.name) -}}
+---
+{{- if .Capabilities.APIVersions.Has "apps/v1" }}
+apiVersion: cert-manager.io/v1
+{{- else }}
+apiVersion: cert-manager.io/v1alpha2
+{{- end }}
+kind: Certificate
+metadata:
+  name:  {{ $root.Values.certificate.name }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  secretName:  {{ $root.Values.certificate.name }}
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: "{{ .Values.certificate.domainName }}"
+  dnsNames:
+    - "{{ .Values.certificate.domainName }}"
+  #acme:
+    #config:
+      #- dns01:
+          #provider: route53
+        #domains:
+          #- "{{ .Values.certificate.domainName }}"
+{{- end -}}
