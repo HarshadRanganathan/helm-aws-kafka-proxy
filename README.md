@@ -63,7 +63,7 @@ helm upgrade -i pes-kafka-proxy . -n platform --values stages/prod/prod-values.y
 
 ## Connection
 
-Clients can connect to the proxy with below sample config:
+Sample client properties:
 
 ```
 bootstrap.servers=
