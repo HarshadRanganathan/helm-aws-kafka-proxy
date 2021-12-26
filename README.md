@@ -33,7 +33,7 @@ Update the placeholders `${PROXY_USERNAME}` and `${PROXY_PASSWORD}` in your CI/C
 
 If you are using Vault to store your credentials, this could be achieved with below commands:
 
-Read credentials from Vault:
+Read the credentials from Vault:
 
 ```bash
 read proxy_username proxy_password < <(echo $(curl --header "X-Vault-Token:<token>" --header "X-Vault-Namespace:<namespace>" https://<vault_url>/<path> | jq -r '.data.data.username,.data.data.password' ))
@@ -45,7 +45,7 @@ Substitute the placeholders with credentials:
 sed -i '' -e "s/\${PROXY_USERNAME}/$proxy_username/" -e "s/\${PROXY_PASSWORD}/$proxy_password/" stages/prod/prod-values.yaml
 ```
 
-Clear the credentials from the file and env variable:
+Clear the credentials from the file and env variables:
 
 ```bash
 sed -i '' -e "s/$proxy_username/\${PROXY_USERNAME}/" -e "s/$proxy_password/\${PROXY_PASSWORD}/" stages/prod/prod-values.yaml
