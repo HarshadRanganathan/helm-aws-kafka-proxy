@@ -12,6 +12,7 @@ Table of Contents
       * [SASL/Plain Auth](#saslplain-auth)
          * [Vault](#vault)
    * [Install/Upgrade Chart](#installupgrade-chart)
+   * [Cron Job](#cron-job)
    * [Client Connection](#client-connection)
 
 ## Pre-Requisites
@@ -71,6 +72,14 @@ Run below command to install/upgrade the chart:
 ```
 helm upgrade -i pes-kafka-proxy . -n platform --values stages/prod/prod-values.yaml
 ```
+
+## Cron Job
+
+We mount the certificate to the proxy so whenever a new certificate is issued due to the way kubernetes works, you need to do an explicit restart of the deployment to pick up the new certificate.
+
+So, we have set up a cron job which will run on a recurring basis and check if the certificate is closer to expiry it will restart the deployment assuming the new certificate is already loaded by the cert-manager successfully without any issues.
+
+If the expiry still continues to reduce, it means there are some issues in getting the new certificate by cert-manager, so we notify about the issue via SNS topic. 
 
 ## Client Connection
 
