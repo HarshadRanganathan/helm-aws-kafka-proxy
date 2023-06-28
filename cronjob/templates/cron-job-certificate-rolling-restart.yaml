@@ -1,0 +1,50 @@
+{{- $root := . }}
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  annotations:
+  labels:
+    chart: kafka-proxy-v0.2.3
+    heritage: Helm
+    release: pes-kafka-proxy-cronjob
+    app: pes-kafka-proxy-cronjob
+    clustertype: pes-kafka-proxy
+  name: pes-kafka-proxy-cronjob
+  namespace: platform
+spec:
+  concurrencyPolicy: Forbid
+  schedule: '0 23 * * *' # cron spec of time, here, 8 o'clock
+  jobTemplate:
+    spec:
+      backoffLimit: 2 # this has very low chance of failing, as all this does
+                      # is prompt kubernetes to schedule new replica set for
+                      # the deployment
+      activeDeadlineSeconds: 600 # timeout, makes most sense with 
+                                 # "waiting for rollout" variant specified below
+      template:
+        spec:
+          volumes:
+            - name: kafka-wildcard-cert
+              secret:
+               defaultMode: 420
+               secretName: {{ $root.Values.certificate.name }}
+          serviceAccountName: kafka-proxy-deployment-restart
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl
+              command:
+              - bash
+              - -c
+              - >-
+                date=$(openssl x509 -in /opt/tls/tls.crt -enddate -noout | sed "s/.*=\(.*\)/\1/") &&
+                echo "$date" &&
+                date_s=$(date -d "${date}" +%s) &&
+                now_s=$(date -d now +%s) &&
+                date_diff=$(( (date_s - now_s) / 86400 )) &&
+                if [[ $date_diff == 7 ]] ; then echo "{{ $root.Values.certificate.name }} will be expired in $date_diff ";aws sns publish --topic-arn {{ $root.Values.sns_topic }} --message "{{ $root.Values.certificate.name }} will be expired in $date_diff " --subject "Kafka certificate will be expired in $date_diff" ; fi;
+                if [[ $date_diff < 30 ]] ; then echo "cert will be expired in $date_diff do rolling restart"; for j in `kubectl  get deployments -n platform |grep kafka-proxy|cut -d " " -f 1`; do kubectl rollout restart deployment/$j -n platform;done; else echo " Certificate will expire in $date_diff days"; fi;
+              volumeMounts:
+               - mountPath: /opt/tls
+                 name: kafka-wildcard-cert
