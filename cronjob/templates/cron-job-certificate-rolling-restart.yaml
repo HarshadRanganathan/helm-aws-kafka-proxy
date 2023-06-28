@@ -7,10 +7,10 @@ metadata:
   labels:
     chart: kafka-proxy-v0.2.3
     heritage: Helm
-    release: pes-kafka-proxy-cronjob
-    app: pes-kafka-proxy-cronjob
-    clustertype: pes-kafka-proxy
-  name: pes-kafka-proxy-cronjob
+    release: kafka-proxy-cronjob
+    app: kafka-proxy-cronjob
+    clustertype: kafka-proxy
+  name: kafka-proxy-cronjob
   namespace: platform
 spec:
   concurrencyPolicy: Forbid
